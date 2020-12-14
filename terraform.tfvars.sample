@@ -1,0 +1,16 @@
+linode_api_key = "LINODE API KEY"
+region = "us-west"
+ssh_users = ["my-linode-username"] # This is the linode username. Setting this will allow your SSH keys to be automatically installed.
+
+# Controller
+plan_controller = "g6-standard-4"
+plan_controller_disk = 163840 # Disk included with the 'g6-standard-4' plan.
+
+# Node
+plan_node = "g6-standard-2"
+node_count = 3
+plan_node_disk = 81920
+
+# Backup Server
+plan_backup = "g6-standard-1"
+plan_backup_disk = 51200

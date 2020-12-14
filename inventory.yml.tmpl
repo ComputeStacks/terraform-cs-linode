@@ -1,0 +1,78 @@
+---
+all:
+  vars:
+    license_key: ""
+    global_region_name: dev
+    overwrite_resolvconf: false # if the provider does not have internal resolvers, change to `true`.
+
+    backups_key: "${backup_key}" # Example: `openssl rand -base64 32`
+
+    ##
+    # Container Network
+    calico_network: 10.100.0.0/21
+    calico_network_name: "net100"
+    calico_network_ipip: true # required when private network performs source/dest filtering
+
+    ##
+    # etcd
+    etcd_initial_cluster_token: cs-demo-cluster
+
+    ##
+    # Floating IP
+    enable_floating_ip: false # will skip installing corosync/pacemaker
+    floating_ip: 0.0.0.0
+    floating_ip_netmask: 0 # e.g. 24, 21
+    # it's important that all nodes have same interface name.
+    # if you mix eth/ens format, automatic failover will not work.
+    # If, however, floating IP is in the same network as the primary ip
+    # on that interface, you may leave the interface field blank and it should
+    # correctly pick the correct interface.
+    floating_ip_interface: "eth0"
+
+    ##
+    # CS Controller Settings
+    cs_app_id: dev # unique name to identify app to CS Support
+    cs_app_url: a.linode.cmptstks.net
+    cs_currency: "USD" # Default currency. Can add more later in web admin.
+    cs_portal_domain: portal.linode.cmptstks.net
+    cs_registry_domain: cr.linode.cmptstks.net
+  children:
+    backup_server:
+      hosts:
+        ${backup_public}:
+          node_ip: ${backup_private} # backup ip used by nodes
+          controller_ip: ${backup_private} # backup ip used by controller
+          ssh_port: 22
+    controller:
+      hosts:
+        ${controller_public}:
+          postgres_cs_password: "${pg_pass}"
+          node_ip: ${controller_private} # The ip used to connect to nodes. (used by docker_iptables)
+    loki_instance:
+      hosts:
+        ${controller_public}:
+          loki_nginx_listen: 8132
+          loki_nginx_password: "${loki_pass}"
+          controller_endpoint: 127.0.0.1 # The ip/hostname used by the controller to connect
+          node_endpoint: ${controller_private} # The ip/hostname used by nodes to connect
+    nodes:
+      hosts:
+%{ for index, name in nodes ~}
+        ${ nodes_public[index] }: # all nodes need cadvisor & node-exporter
+          backup_ip: ${ nodes_private[index] } # node ip used by backup server
+          consul_bootstrap: %{ if index == 0 }true%{ else }false%{ endif } # set false on all other nodes.
+          consul_listen_ip: ${ nodes_private[index] } # used by both controller and agent.
+          prom_ip_address: ${ nodes_private[index] } # The ip used by prom to connect for stats.
+          etcd_listen_ip: ${ nodes_private[index] } # shared with corosync
+          ssh_port: 22
+%{ endfor ~}
+    prom_instance:
+      hosts:
+        ${controller_public}: # prometheus, alert-manager
+          alertmanager_nginx_listen: 8134
+          prometheus_nginx_listen: 8133
+          prometheus_nginx_password: "${prom_pass}"
+          node_ip: ${controller_private} # The ip used to connect to nodes. (used by docker_iptables)
+          controller_endpoint: 127.0.0.1 # The hostname used by the controller to connect
+          on_controller: true # If running on controller, set to true. (used by docker_iptables)
+          ssh_port: 22
