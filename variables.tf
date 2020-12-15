@@ -79,3 +79,19 @@ variable "plan_backup_disk" {
 	type = number
 	default = 51200
 }
+
+# Prometheus & Loki
+variable "dedicated_prom_server" {
+	type = bool
+	default = true # false = place loki/prom on the controller
+}
+
+variable "plan_prom" {
+	type = string
+	default = "g6-standard-2"
+}
+
+variable "plan_prom_disk" {
+	type = number
+	default = 81920
+}

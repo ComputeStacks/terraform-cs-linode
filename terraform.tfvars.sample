@@ -14,3 +14,8 @@ plan_node_disk = 81920
 # Backup Server
 plan_backup = "g6-standard-1"
 plan_backup_disk = 51200
+
+# Prometheus
+dedicated_prom_server = true # Set to false to run prometheus & loki on the controller.
+plan_prom = "g6-standard-2"
+plan_prom_disk = 81920

@@ -90,3 +90,37 @@ resource "linode_instance" "backup" {
     "new_hostname" = "backup"
   }
 }
+
+resource "linode_instance" "prometheus" {
+	count = var.dedicated_prom_server ? 1 : 0
+
+	backups_enabled = false
+  label = format("metrics%s1", var.node_base_name)
+  region = var.region
+  type = var.plan_node
+	private_ip = true
+
+	disk {
+		label = "boot"
+		size = var.plan_node_disk
+		image = "linode/centos7"
+		authorized_users = var.ssh_users
+		root_pass = random_string.server_password.result
+		stackscript_id = linode_stackscript.cs_init.id
+		stackscript_data = {
+			"new_hostname" = format("metrics%s1", var.node_base_name)
+		}
+	}
+
+	config {
+		label = "boot_config"
+		kernel = "linode/grub2"
+		devices {
+			sda {
+				disk_label = "boot"
+			}
+		}
+	}
+	boot_config_label = "boot_config"
+
+}

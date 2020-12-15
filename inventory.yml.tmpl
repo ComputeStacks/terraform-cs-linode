@@ -11,7 +11,7 @@ all:
     # Container Network
     calico_network: 10.100.0.0/21
     calico_network_name: "net100"
-    calico_network_ipip: true # required when private network performs source/dest filtering
+    calico_network_ipip: ${node_count > 1 ? true : false} # required when private network performs source/dest filtering
 
     ##
     # etcd
@@ -47,14 +47,7 @@ all:
       hosts:
         ${controller_public}:
           postgres_cs_password: "${pg_pass}"
-          node_ip: ${controller_private} # The ip used to connect to nodes. (used by docker_iptables)
-    loki_instance:
-      hosts:
-        ${controller_public}:
-          loki_nginx_listen: 8132
-          loki_nginx_password: "${loki_pass}"
-          controller_endpoint: 127.0.0.1 # The ip/hostname used by the controller to connect
-          node_endpoint: ${controller_private} # The ip/hostname used by nodes to connect
+          node_ip: ${controller_private} # The ip used to connect to nodes. (used by docker_iptables)    
     nodes:
       hosts:
 %{ for index, name in nodes ~}
@@ -66,6 +59,14 @@ all:
           etcd_listen_ip: ${ nodes_private[index] } # shared with corosync
           ssh_port: 22
 %{ endfor ~}
+%{ if prom_count < 1 ~}
+    loki_instance:
+      hosts:
+        ${controller_public}:
+          loki_nginx_listen: 8132
+          loki_nginx_password: "${loki_pass}"
+          controller_endpoint: 127.0.0.1 # The ip/hostname used by the controller to connect
+          node_endpoint: ${controller_private} # The ip/hostname used by nodes to connect
     prom_instance:
       hosts:
         ${controller_public}: # prometheus, alert-manager
@@ -76,3 +77,24 @@ all:
           controller_endpoint: 127.0.0.1 # The hostname used by the controller to connect
           on_controller: true # If running on controller, set to true. (used by docker_iptables)
           ssh_port: 22
+%{ else ~}
+%{ for index, name in prom_servers ~}
+    loki_instance:
+      hosts:
+        ${ prom_public[index] }:
+          loki_nginx_listen: 8132
+          loki_nginx_password: "${loki_pass}"
+          controller_endpoint: ${ prom_private[index] } # The ip/hostname used by the controller to connect
+          node_endpoint: ${ prom_private[index] } # The ip/hostname used by nodes to connect
+    prom_instance:
+      hosts:
+        ${ prom_public[index] }: # prometheus, alert-manager
+          alertmanager_nginx_listen: 8134
+          prometheus_nginx_listen: 8133
+          prometheus_nginx_password: "${prom_pass}"
+          node_ip: ${ prom_private[index] } # The ip used to connect to nodes. (used by docker_iptables)
+          controller_endpoint: ${ prom_private[index] } # The hostname used by the controller to connect
+          on_controller: false # If running on controller, set to true. (used by docker_iptables)
+          ssh_port: 22
+%{ endfor ~}
+%{ endif ~}

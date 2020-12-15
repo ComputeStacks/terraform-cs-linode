@@ -1,8 +1,13 @@
 resource "local_file" "Inventory" {
 	content = templatefile("inventory.yml.tmpl", {
+		node_count = length(linode_instance.node_cluster),
+		prom_count = length(linode_instance.prometheus),
 		nodes = linode_instance.node_cluster.*.label,
+		prom_servers = linode_instance.prometheus.*.label,
 		nodes_public = linode_instance.node_cluster.*.ip_address,
 		nodes_private = linode_instance.node_cluster.*.private_ip_address,
+		prom_public = linode_instance.prometheus.*.ip_address,
+		prom_private = linode_instance.prometheus.*.private_ip_address,
 		controller_public = linode_instance.controller.ip_address,
 		controller_private = linode_instance.controller.private_ip_address,
 		backup_public = linode_instance.backup.ip_address,
