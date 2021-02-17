@@ -1,6 +1,6 @@
 # ComputeStacks Cluster on Linode
 
-Create a `terraform.tfvars` file and adjust the settings appropriatly. Specifically, you will:
+Create a `terraform.tfvars` file and adjust the settings appropriately. Specifically, you will:
 
 * Need to generate an [API Key](https://www.linode.com/docs/guides/api-key/)
 * Choose the appropriate package for your linode
@@ -16,32 +16,36 @@ Before proceeding, ensure you have [terraform installed](https://learn.hashicorp
 terraform init
 ```
 
+## Using Linode DNS Manager
+If you choose to have terraform configure your domain in Linode's DNS manager:
+
+1. Set `use_linode_ns` to `true`
+2. Create the zone with Linode and take note of the domain ID in the URL.
+3. Set `linode_zone_id` with the domain ID.
+
 ## Running Terraform
 
 ```bash
 terraform apply
 ```
 
-## Complete Your Cluster
+After terraform runs, you will see 2 newly created files under the `result/` directory.
 
-Once the process is completed, you will find an `inventory.yml` file in this directory. This will be filled in with the servers that were just created, as well as a few other things like new random passwords.
+1. `dns_settings.txt` | If you did not configure DNS to be automatically configured, you will need to manually apply these settings in your DNS manager.
+2. `inventory.yml` | You will need this later when configuring Ansible.
 
-However, you will still need to update all the other variables, such as:
-* License Key
-* Domain Names
-* Floating IP _(if applicable)_
-* Your company / brand identification
+**Note:** Once your nodes perform their initial boot sequence, and before running ansible: Disable the [Linode Network Helper](https://www.linode.com/docs/guides/network-helper/).
 
 ### Floating IP
 
-If you're only deploying a single node, you do not need a floating IP. This is only useful when you have 3 nodes and would like automatic failover of the load balancer. 
+If you're only deploying a single node, you do not need a floating IP. This is only useful when you have 3 or more nodes and would like automatic failover of the load balancer. 
 
 To add a floating IP, you will need to open a support ticket with Linode from within your cloud manager, and ask them to allocate an additional IP. For justification, you can explain to them that you need a shared IP for your new cluster, in order to enable high availability.
 
 Once you have been allocated an additional IP, you will need to:
 
 1. Enable [IP Sharing](https://www.linode.com/docs/guides/remote-access#configuring-ip-sharing) on that IP Address with all of your nodes. 
-2. Note the IP Address and the Network (e.g. /24, /21) and update the `inventory.yml` file with your newly created address (and network!).
-3. Disable [Network Helper](https://www.linode.com/docs/guides/network-helper/)
+2. Update your `inventory.yml` file with the new ip. 
+3. Ensure the Linode Network Helper is disabled for the nodes.
 
 To complete the setup, please run our [Ansible Script](https://github.com/ComputeStacks/ansible-install) using the newly generated `inventory.yml` file.

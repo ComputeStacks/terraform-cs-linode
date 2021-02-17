@@ -2,7 +2,7 @@ terraform {
   required_providers {
     linode = {
       source  = "linode/linode"
-      version = "~> 1.13"
+      version = "~> 1.14"
     }
   }
 }
@@ -30,4 +30,12 @@ resource "random_string" "prometheus_password" {
 resource "random_string" "backup_key" {
     length  = 24
     special = true
+}
+resource "random_string" "app_id" {
+    length  = 8
+    special = false
+}
+resource "random_string" "network_name" {
+    length  = 6
+    special = false
 }

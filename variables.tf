@@ -81,17 +81,104 @@ variable "plan_backup_disk" {
 }
 
 # Prometheus & Loki
-variable "dedicated_prom_server" {
+variable "dedicated_metrics_server" {
 	type = bool
 	default = true # false = place loki/prom on the controller
 }
 
-variable "plan_prom" {
+variable "plan_metrics" {
 	type = string
 	default = "g6-standard-2"
 }
 
-variable "plan_prom_disk" {
+variable "plan_metrics_disk" {
 	type = number
 	default = 81920
+}
+
+# Registry
+variable "dedicated_registry_server" {
+	type = bool
+	default = true # false = place loki/prom on the controller
+}
+
+variable "plan_registry" {
+	type = string
+	default = "g6-standard-2"
+}
+
+variable "plan_registry_disk" {
+	type = number
+	default = 81920
+}
+
+##
+# ComputeStacks
+variable "license_key" {
+	type = string
+	default = ""
+}
+variable "region_name" {
+	type = string
+	default = "linode"
+}
+variable "cs_app_url" {
+	type = string
+	default = "a.linode"
+}
+variable "cs_currency" {
+	type = string
+	default = "USD"
+}
+variable "cs_network_range" {
+	type = string
+	default = "10.100.10.0/24"
+}
+variable "cs_portal_domain" {
+	type = string
+	default = "portal.linode"
+}
+variable "cs_registry_domain" {
+	type = string
+	default = "cr.linode"
+}
+variable "cs_metrics_domain" {
+	type = string
+	default = "metrics.linode"
+}
+
+##
+# DNS
+variable "use_linode_ns" {
+	type = bool
+	default = false
+}
+variable "linode_zone_id" {
+	type = string
+}
+variable "zone_name" {
+	type = string
+}
+variable "zone_ttl" {
+	type = number
+	default = 86400
+}
+
+##
+# SSL
+variable "use_zerossl" {
+	type = bool
+	default = true
+}
+variable "acme_challenge_method" {
+	type = string
+	default = "http"
+}
+variable "acme_cf_token" {
+	type = string
+	default = ""
+}
+variable "acme_cf_account" {
+	type = string
+	default = ""
 }

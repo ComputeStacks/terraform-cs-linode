@@ -1,0 +1,155 @@
+---
+all:
+  vars:
+    license_key: ${license_key}
+    global_region_name: ${region_name}
+    overwrite_resolvconf: false # if the provider does not have internal resolvers, change to `true`.
+
+    backups_key: "${backup_key}" # Example: `openssl rand -base64 32`
+
+    ##
+    # Container Network
+
+    # We recommend not going larger than a `/24`. If you need more, you can create additional networks later.
+    calico_network: ${network_range}
+    calico_network_name: ${network_name} # some unique identifier. should not include spaces, capitals, or special characters.
+
+    # required when private network performs source/dest filtering
+    # linode private network performs this, so if you have more than 1 node, we turn it on.
+    calico_network_ipip: ${node_count > 1 ? true : false}
+
+    ##
+    # etcd
+    etcd_initial_cluster_token: ${region_name}-cluster
+
+    ##
+    # Floating IP
+    # You will need to request a floating IP from Linode support after the servers have been created.
+    # Contact us for help adding.
+    enable_floating_ip: false
+    floating_ip: 0.0.0.0
+    floating_ip_netmask: 32 # e.g. 24, 21
+    # it's important that all nodes have same interface name.
+    # if you mix eth/ens format, automatic failover will not work.
+    # If, however, floating IP is in the same network as the primary ip
+    # on that interface, you may leave the interface field blank and it should
+    # correctly pick the correct interface.
+    floating_ip_interface: "eth0"
+
+    ##
+    # CS Controller Settings
+
+    # This helps us identify your installation when you contact us for support
+    # Please choose a unique name that is all lower case, has no spaces, and only '-' and '_' characters.
+    # We generally recommend your company name, so if you were 'Acme, Inc.', we would recommend 'acme'.
+    # Alternatively, if you do not want us to see this, you can generate a random string with: `pwgen -s 12 1`
+    cs_app_id: "${app_id}"
+
+    # Each container will receive a unique subdomain from this domain by default.
+    # We also need to tell CS what the zone file is in order to provision wildcard SSL for the load balancer.
+    cs_app_url: ${cs_app_url}
+    cs_app_zone: ${zone_name} # The zone file for the app url
+
+    cs_currency: ${currency} # Default currency. Can add more later in web admin.
+
+    # The domain for the controller
+    cs_portal_domain: ${cs_portal_domain}
+
+    # domain for the builtin container registry
+    cs_registry_domain: ${cs_registry_domain}
+
+    # Internal URL for metrics.
+    # We ask for a domain so that we may generate a LetsEncrypt certificate for it
+    cs_metrics_domain: ${cs_metrics_domain}
+
+    ##
+    # Management SSL Certificates
+    # Controller, Registry, and Metrics will all receive ZeroSSL certificates during installation. By default,
+    # this will be done through HTTP validation. If you're using CloudFlare, you may optionally use DNS validation.
+    #
+    acme_challenge_method: ${acme_challenge_method} # default is: 'http'
+    acme_cf_token: "${acme_cf_token}" # API Token
+    acme_cf_account: "${acme_cf_account}" # Account ID
+    
+    use_zerossl: ${use_zerossl} # default is: true
+
+    ##
+    # Additional Management Ips
+    # Add any additional IP Addresses that you want to have full access
+    # to these servers. You can enter either single address, or ranges like: 192.168.10.0/24.
+    #
+    # Example:
+    # extra_allowed_ipv4_addresses:
+    #   - "192.168.10.32"
+    #   - "192.168.10.33"
+    # extra_allowed_ipv6_addresses:
+    #   - "2600:3c01::f03c:92ff:feaa:fc7e"
+  children:
+    backup_server:
+      hosts:
+        ${backup_public}:
+          node_ip: ${backup_private} # backup ip used by nodes
+          controller_ip: ${backup_private} # backup ip used by controller
+          metrics_ip_address: ${backup_private} # The ip used by prom to connect for stats.
+          enable_ipv6: true
+          ssh_port: 22
+    controller:
+      hosts:
+        ${controller_public}:
+          postgres_cs_password: "${pg_pass}"
+          node_ip: ${controller_private} # The ip used to connect to nodes. (used by docker_iptables)
+          metrics_ip_address: ${controller_private} # The ip used by prom to connect for stats.
+          enable_ipv6: true
+          ssh_port: 22
+%{ if metrics_count < 1 ~}
+    metrics:
+      hosts:
+        ${controller_public}:
+          loki_password: "${loki_pass}" # pwgen -s 32 1
+          prometheus_password: "${prom_pass}" # pwgen -s 32 1
+          controller_endpoint: ${controller_private} # The ip/hostname used by the controller to connect
+          node_endpoint: ${controller_private} # The ip/hostname used by nodes to connect
+          enable_ipv6: true
+          ssh_port: 22
+%{ else ~}
+%{ for index, public_ip in metrics_public ~}
+    metrics:
+      hosts:
+        ${ public_ip }:
+          loki_password: "${loki_pass}" # pwgen -s 32 1
+          prometheus_password: "${prom_pass}" # pwgen -s 32 1
+          controller_endpoint: ${metrics_private[index]} # The ip/hostname used by the controller to connect
+          node_endpoint: ${metrics_private[index]} # The ip/hostname used by nodes to connect
+          enable_ipv6: true
+          ssh_port: 22
+%{ endfor ~}
+%{ endif ~}
+    nodes:
+      hosts:
+%{ for index, public_ip in nodes_public ~}
+        ${ public_ip }:
+          backup_ip: ${ nodes_private[index] } # node ip used by backup server
+          consul_bootstrap: %{ if index == 0 }true%{ else }false%{ endif } # set false on all other nodes.
+          consul_listen_ip: ${ nodes_private[index] } # used by both controller and agent.
+          metrics_ip_address: ${ nodes_private[index] } # The ip used by prom to connect for stats.
+          etcd_listen_ip: ${ nodes_private[index] } # shared with corosync
+          ssh_port: 22
+
+          # Currently not supported on container nodes. Contact us for info on how to bring ipv6 to your cluster.
+          enable_ipv6: false
+%{ endfor ~}
+    registry:
+      hosts:
+%{ if registry_count < 1 ~}
+        ${ controller_public }:
+          controller_ip: ${ controller_private } # IP Addresses used by controller to connect to registry
+          enable_ipv6: true
+          ssh_port: 22
+%{ else ~}
+%{ for index, public_ip in registry_public ~}
+        ${ public_ip }:
+          controller_ip: ${ registry_private[index] } # IP Addresses used by controller to connect to registry
+          enable_ipv6: true
+          ssh_port: 22
+%{ endfor ~}
+%{ endif ~}
