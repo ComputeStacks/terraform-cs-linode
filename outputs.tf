@@ -32,6 +32,7 @@ resource "local_file" "inventory" {
 		acme_challenge_method = var.acme_challenge_method,
 		acme_cf_account = var.acme_cf_account,
 		acme_cf_token = var.acme_cf_token,
+		default_image = var.linode_default_image
 	})
 	filename = "result/inventory.yml"
 }
@@ -47,7 +48,7 @@ resource "local_file" "dns_settings" {
 		nodes_public = linode_instance.node_cluster.*.ip_address,
 		controller_public = linode_instance.controller.ip_address,
 		metrics_public = linode_instance.metrics.*.ip_address,
-		registry_public = linode_instance.registries.*.ip_address,
+		registry_public = linode_instance.registries.*.ip_address
 	})
 	filename = "result/dns_settings.txt"
 }
