@@ -197,3 +197,12 @@ variable "acme_cf_account" {
 	type = string
 	default = ""
 }
+# Admin User
+variable "cs_admin_create" {
+	type = bool
+	default = true
+}
+variable "cs_admin_email" {
+	type = string
+	default = "root@localhost"
+}

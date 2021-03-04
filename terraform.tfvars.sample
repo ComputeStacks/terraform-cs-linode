@@ -74,3 +74,8 @@ zone_ttl = 86400
 # # Use Cloudflare Dns Challenge
 # acme_cf_token = "" # API Token
 # acme_cf_account = "" # Account ID
+
+##
+# CS User
+cs_admin_create = true
+cs_admin_email = "root@localhost"

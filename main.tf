@@ -39,3 +39,7 @@ resource "random_string" "network_name" {
     length  = 6
     special = false
 }
+resource "random_string" "cs_admin_password" {
+    length  = 12
+    special = true
+}
