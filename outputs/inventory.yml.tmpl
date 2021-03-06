@@ -8,7 +8,10 @@ all:
     selinux: true
 %{ endif ~}
     license_key: ${license_key}
-    global_region_name: ${region_name}
+    
+    region_name: ${region_name}
+    availability_zone_name: "{{ region_name }}-a"
+    
     overwrite_resolvconf: false # if the provider does not have internal resolvers, change to `true`.
 
     backups_key: "${backup_key}" # Example: `openssl rand -base64 32`
