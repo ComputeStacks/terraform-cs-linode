@@ -1,12 +1,8 @@
 ---
 all:
   vars:
-%{ if default_image ~}
     ansible_python_interpreter: /usr/bin/python3
     selinux: false
-%{ else ~}
-    selinux: true
-%{ endif ~}
     license_key: ${license_key}
     
     region_name: ${region_name}

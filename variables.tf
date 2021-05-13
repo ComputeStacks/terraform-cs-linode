@@ -8,14 +8,6 @@ variable "ssh_users" {
 
 ##
 # Linode Image
-variable "linode_default_image" {
-	type = bool
-	default = true
-}
-variable "centos_image" {
-	type = string
-	default = "linode/centos7"
-}
 variable "debian_image" {
 	type = string
 	default = "linode/debian10"
