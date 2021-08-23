@@ -8,7 +8,7 @@ hostname $NEW_HOSTNAME && echo "127.0.0.1  $NEW_HOSTNAME" >> /etc/hosts
 hostnamectl set-hostname $NEW_HOSTNAME
 apt update && apt -y install openssl ca-certificates linux-headers-amd64 python3 python3-pip python3-openssl python3-apt && pip3 install ansible
 EOF
-	images = ["linode/debian10"]
+	images = ["linode/debian11"]
 	rev_note = "initial version"
 }
 

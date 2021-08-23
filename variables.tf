@@ -10,7 +10,7 @@ variable "ssh_users" {
 # Linode Image
 variable "debian_image" {
 	type = string
-	default = "linode/debian10"
+	default = "linode/debian11"
 }
 
 ##
