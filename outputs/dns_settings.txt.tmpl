@@ -1,13 +1,7 @@
 ${cs_portal_domain} A ${controller_public}
-${cs_app_url} A ${nodes_public[0]}
+${cs_app_url} A ${floating_ip}
 *.${cs_app_url} CNAME ${cs_app_url}.
-%{ if registry_count > 0 ~}
-${cs_registry_domain} A ${registry_public[0]}
-%{ else ~}
-${cs_registry_domain} A ${controller_public}
-%{ endif ~}
-%{ if metrics_count > 0 ~}
-${cs_metrics_domain} A ${metrics_public[0]}
-%{ else ~}
-${cs_metrics_domain} A ${controller_public}
-%{ endif ~}
+${cs_registry_domain} A ${registry_public}
+${cs_metrics_domain} A ${metrics_public}
+${primary_nameserver_domain} A ${nsone_public}
+${secondary_nameserver_domain} A ${nstwo_public}

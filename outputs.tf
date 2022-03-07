@@ -1,14 +1,12 @@
 resource "local_file" "inventory" {
 	content = templatefile("outputs/inventory.yml.tmpl", {
-		node_count = length(linode_instance.node_cluster),
-		metrics_count = length(linode_instance.metrics),
-		registry_count = length(linode_instance.registries),
-		registry_public = linode_instance.registries.*.ip_address,
-		registry_private = linode_instance.registries.*.private_ip_address,
+		nodes = linode_instance.node_cluster,
+		registry_public = linode_instance.registry.ip_address,
+		registry_private = linode_instance.registry.private_ip_address,
 		nodes_public = linode_instance.node_cluster.*.ip_address,
 		nodes_private = linode_instance.node_cluster.*.private_ip_address,
-		metrics_public = linode_instance.metrics.*.ip_address,
-		metrics_private = linode_instance.metrics.*.private_ip_address,
+		metrics_public = linode_instance.metrics.ip_address,
+		metrics_private = linode_instance.metrics.private_ip_address,
 		controller_public = linode_instance.controller.ip_address,
 		controller_private = linode_instance.controller.private_ip_address,
 		backup_public = linode_instance.backup.ip_address,
@@ -27,14 +25,13 @@ resource "local_file" "inventory" {
 		cs_portal_domain = format("%s.%s", var.cs_portal_domain, var.zone_name),
 		cs_registry_domain = format("%s.%s", var.cs_registry_domain, var.zone_name),
 		cs_metrics_domain = format("%s.%s", var.cs_metrics_domain, var.zone_name),
-		license_key = var.license_key,
-		use_zerossl = var.use_zerossl,
-		acme_challenge_method = var.acme_challenge_method,
-		acme_cf_account = var.acme_cf_account,
-		acme_cf_token = var.acme_cf_token,
-		cs_admin_create = var.cs_admin_create,
 		cs_admin_email = var.cs_admin_email,
-		cs_admin_password = random_string.cs_admin_password.result
+		cs_admin_password = random_string.cs_admin_password.result,
+		nsone_public = linode_instance.nsone.ip_address,
+		nstwo_public = linode_instance.nstwo.ip_address,
+		primary_nameserver_domain = format("%s.%s", var.primary_nameserver_domain, var.primary_nameserver_zone),
+		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone),
+		floating_ip = linode_instance.node_cluster.0.ip_address
 	})
 	filename = "result/inventory.yml"
 }
@@ -45,12 +42,15 @@ resource "local_file" "dns_settings" {
 		cs_portal_domain = format("%s.%s", var.cs_portal_domain, var.zone_name),
 		cs_registry_domain = format("%s.%s", var.cs_registry_domain, var.zone_name),
 		cs_metrics_domain = format("%s.%s", var.cs_metrics_domain, var.zone_name),
-		registry_count = length(linode_instance.registries),
-		metrics_count = length(linode_instance.metrics),
 		nodes_public = linode_instance.node_cluster.*.ip_address,
 		controller_public = linode_instance.controller.ip_address,
-		metrics_public = linode_instance.metrics.*.ip_address,
-		registry_public = linode_instance.registries.*.ip_address
+		metrics_public = linode_instance.metrics.ip_address,
+		registry_public = linode_instance.registry.ip_address,
+		nsone_public = linode_instance.nsone.ip_address,
+		nstwo_public = linode_instance.nstwo.ip_address,
+		primary_nameserver_domain = format("%s.%s", var.primary_nameserver_domain, var.primary_nameserver_zone),
+		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone),
+		floating_ip = linode_instance.node_cluster.0.ip_address
 	})
 	filename = "result/dns_settings.txt"
 }

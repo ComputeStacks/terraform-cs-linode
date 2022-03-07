@@ -2,7 +2,7 @@ terraform {
   required_providers {
     linode = {
       source  = "linode/linode"
-      version = "~> 1.18"
+      version = "~> 1.25"
     }
   }
 }
@@ -12,7 +12,7 @@ provider "linode" {
 
 resource "random_string" "server_password" {
     length  = 24
-    special = true
+    special = false
 }
 
 resource "random_string" "pg_password" {
@@ -29,10 +29,10 @@ resource "random_string" "prometheus_password" {
 }
 resource "random_string" "backup_key" {
     length  = 24
-    special = true
+    special = false
 }
 resource "random_string" "app_id" {
-    length  = 8
+    length  = 12
     special = false
 }
 resource "random_string" "network_name" {
@@ -41,5 +41,5 @@ resource "random_string" "network_name" {
 }
 resource "random_string" "cs_admin_password" {
     length  = 12
-    special = true
+    special = false
 }

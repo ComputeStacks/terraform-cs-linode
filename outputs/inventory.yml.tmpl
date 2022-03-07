@@ -1,34 +1,49 @@
 ---
 all:
   vars:
-    ansible_python_interpreter: /usr/bin/python3
-    license_key: ${license_key}
-    
-    region_name: ${region_name}
+    # Installs the ComputeStacks Support SSH Key, and adds our support ip to the firewall.
+    install_cs_support_key: true
+
+    region_name: ${region_name} # The region name. Should be lower case, without spaces, and only '-' and '_' characters
     availability_zone_name: "{{ region_name }}-a"
-    
+
     overwrite_resolvconf: false # if the provider does not have internal resolvers, change to `true`.
+    ansible_python_interpreter: /usr/bin/python3
 
     backups_key: "${backup_key}" # Example: `openssl rand -base64 32`
 
     ##
+    # Bug Reporting
+    #
+    # 1) Uncomment and leave blank to disable bug reporting completely.
+    # 2) Leave commented out to report bugs to ComputeStacks. 
+    # 3) Uncomment and set to your own Sentry DSN.
+    # sentry_dsn: ""
+
+    ##
     # Container Network
 
-    # We recommend not going larger than a `/24`. If you need more, you can create additional networks later.
+    # We recommend not going larger than a `/21`. If you need more, you can create additional networks later.
     calico_network: ${network_range}
-    calico_network_name: ${network_name} # some unique identifier. should not include spaces, capitals, or special characters.
+
+    # some unique identifier. should not include spaces, capitals, or special characters.
+    calico_network_name: ${network_name}
 
     # required when private network performs source/dest filtering
-    # linode private network performs this, so if you have more than 1 node, we turn it on.
-    calico_network_ipip: ${node_count > 1 ? true : false}
+    calico_network_ipip: true # Set to `false` if using linode vlans
 
     ##
     # Floating IP
-    # You will need to request a floating IP from Linode support after the servers have been created.
-    # Contact us for help adding.
+
+    # Configures corosync & pacemaker for automated failover.
+    # Set to true if using linode shared ip.
     enable_floating_ip: false
-    floating_ip: 0.0.0.0
+
+    # Even if enable_floating_ip is false, set this to the public IP of your availability zone.
+    # for single-node environments, this can be just the public ip of the node.
+    floating_ip: ${floating_ip}
     floating_ip_netmask: 32
+    
     # it's important that all nodes have same interface name.
     # if you mix eth/ens format, automatic failover will not work.
     # If, however, floating IP is in the same network as the primary ip
@@ -39,45 +54,25 @@ all:
     ##
     # CS Controller Settings
 
-    # This helps us identify your installation when you contact us for support
-    # Please choose a unique name that is all lower case, has no spaces, and only '-' and '_' characters.
-    # We generally recommend your company name, so if you were 'Acme, Inc.', we would recommend 'acme'.
-    # Alternatively, if you do not want us to see this, you can generate a random string with: `pwgen -s 12 1`
-    cs_app_id: "${app_id}"
-
-    # Each container will receive a unique subdomain from this domain by default.
-    # We also need to tell CS what the zone file is in order to provision wildcard SSL for the load balancer.
     cs_app_url: ${cs_app_url}
-    cs_app_zone: ${zone_name} # The zone file for the app url
-
-    cs_currency: ${currency} # Default currency. Can add more later in web admin.
-
-    # The domain for the controller
+    cs_app_zone: ${zone_name}
+    cs_currency: ${currency}
     cs_portal_domain: ${cs_portal_domain}
-
-    # domain for the builtin container registry
     cs_registry_domain: ${cs_registry_domain}
-
-    # Internal URL for metrics.
-    # We ask for a domain so that we may generate a LetsEncrypt certificate for it
     cs_metrics_domain: ${cs_metrics_domain}
 
     ##
     # Create Admin Account
-    cs_admin_create: ${cs_admin_create}
     cs_admin_email: "${cs_admin_email}"
     cs_admin_password: "${cs_admin_password}"
 
     ##
     # Management SSL Certificates
-    # Controller, Registry, and Metrics will all receive ZeroSSL certificates during installation. By default,
-    # this will be done through HTTP validation. If you're using CloudFlare, you may optionally use DNS validation.
+    # Controller, Registry, and Metrics will all receive ZeroSSL certificates during installation. By default, this will be done through HTTP validation.
     #
-    acme_challenge_method: ${acme_challenge_method} # default is: 'http'
-    acme_cf_token: "${acme_cf_token}" # API Token
-    acme_cf_account: "${acme_cf_account}" # Account ID
-    
-    use_zerossl: ${use_zerossl} # default is: true
+    # acme_challenge_method: 'http'
+    #
+    # To use DNS validation, see `ACME_VALIDATIONS.md`. 
 
     ##
     # Additional Management Ips
@@ -107,29 +102,32 @@ all:
           metrics_ip_address: ${controller_private} # The ip used by prom to connect for stats.
           enable_ipv6: true
           ssh_port: 22
-%{ if metrics_count < 1 ~}
-    metrics:
+    primary_nameserver:
       hosts:
-        ${controller_public}:
-          loki_password: "${loki_pass}" # pwgen -s 32 1
-          prometheus_password: "${prom_pass}" # pwgen -s 32 1
-          controller_endpoint: ${controller_private} # The ip/hostname used by the controller to connect
-          node_endpoint: ${controller_private} # The ip/hostname used by nodes to connect
+        ${nsone_public}:
+          pdns_name: "${primary_nameserver_domain}"  
           enable_ipv6: true
           ssh_port: 22
-%{ else ~}
-%{ for index, public_ip in metrics_public ~}
+
+          # The ip used for internal postgres replication. 
+          # This may often times be separate than the primary public ip
+          postgres_ip: ${nsone_public}
+    follower_nameservers:
+        hosts: # Note that we only support 1 follower!
+          ${nstwo_public}:
+            pdns_name: "${secondary_nameserver_domain}"
+            enable_ipv6: true
+            ssh_port: 22      
+            postgres_ip: ${nstwo_public}
     metrics:
       hosts:
-        ${ public_ip }:
+        ${metrics_public}:
           loki_password: "${loki_pass}" # pwgen -s 32 1
           prometheus_password: "${prom_pass}" # pwgen -s 32 1
-          controller_endpoint: ${metrics_private[index]} # The ip/hostname used by the controller to connect
-          node_endpoint: ${metrics_private[index]} # The ip/hostname used by nodes to connect
+          controller_endpoint: ${metrics_private} # The ip/hostname used by the controller to connect
+          node_endpoint: ${metrics_private} # The ip/hostname used by nodes to connect
           enable_ipv6: true
           ssh_port: 22
-%{ endfor ~}
-%{ endif ~}
     nodes:
       hosts:
 %{ for index, public_ip in nodes_public ~}
@@ -147,16 +145,7 @@ all:
 %{ endfor ~}
     registry:
       hosts:
-%{ if registry_count < 1 ~}
-        ${ controller_public }:
-          controller_ip: ${ controller_private } # IP Addresses used by controller to connect to registry
+        ${ registry_public }:
+          controller_ip: ${ registry_private } # IP Addresses used by controller to connect to registry
           enable_ipv6: true
           ssh_port: 22
-%{ else ~}
-%{ for index, public_ip in registry_public ~}
-        ${ public_ip }:
-          controller_ip: ${ registry_private[index] } # IP Addresses used by controller to connect to registry
-          enable_ipv6: true
-          ssh_port: 22
-%{ endfor ~}
-%{ endif ~}

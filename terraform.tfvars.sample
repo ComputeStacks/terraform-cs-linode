@@ -1,5 +1,3 @@
-##
-# Infrastructure
 linode_api_key = "LINODE API KEY"
 region = "us-west"
 ssh_users = ["my-linode-username"] # This is the linode username. Setting this will allow your SSH keys to be automatically installed.
@@ -18,29 +16,29 @@ plan_backup = "g6-standard-1"
 plan_backup_disk = 51200
 
 # Metrics
-dedicated_metrics_server = true # Set to false to run prometheus & loki on the controller.
 plan_metrics = "g6-standard-2"
 plan_metrics_disk = 81920
 
 # Registry
-dedicated_registry_server = true # Set to false to run the container registry on the controller.
 plan_registry = "g6-standard-2"
 plan_registry_disk = 81920
+
+# Nameservers
+plan_nameserver = "g6-standard-1"
+plan_nameserver_disk = 51200
+region_nstwo = "us-east"
 
 ##
 # ComputeStacks
 
 cs_currency = "USD"
 
-# Your ComputeStacks License Key (https://accounts.computestacks.com/store/computestacks)
-license_key = ""
-
 # The region name. Should be lower case, without spaces, and only '-' and '_' characters
 region_name = "linode"
 
 ##
 # Domains
-zone_name = "cmptstks.net"
+zone_name = "example.org"
 
 # Each container will receive a unique subdomain from this domain by default.
 # We also need to tell CS what the zone file is in order to provision wildcard SSL for the load balancer.
@@ -56,26 +54,12 @@ cs_registry_domain = "cr.linode" # ${cs_registry_domain}.${zone_name}
 # We ask for a domain so that we may generate a LetsEncrypt certificate for it
 cs_metrics_domain = "metrics.linode" # ${cs_metrics_domain}.${zone_name}
 
-##
-# DNS Settings
-# Only valid if you're using Linode's nameservers
-use_linode_ns = false
-linode_zone_id = "1010101"
-
-# What TTL to use when creating records
-# Valid values are listed here: https://registry.terraform.io/providers/linode/linode/latest/docs/resources/domain#ttl_sec
-zone_ttl = 86400 
-
-##
-# SSL Settings
-# use_zerossl = true
-# acme_challenge_method = "http" # or 'cloudflare' for dns challenge.
-
-# # Use Cloudflare Dns Challenge
-# acme_cf_token = "" # API Token
-# acme_cf_account = "" # Account ID
+# PowerDNS
+primary_nameserver_zone = "example.net"
+primary_nameserver_domain = "ns1.linode"
+secondary_nameserver_zone = "example.org"
+secondary_nameserver_domain = "ns2.linode"
 
 ##
 # CS User
-cs_admin_create = true
-cs_admin_email = "root@localhost"
+cs_admin_email = "admin@cstacks.local"

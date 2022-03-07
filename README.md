@@ -8,6 +8,13 @@ Create a `terraform.tfvars` file and adjust the settings appropriately. Specific
 * Specify how many nodes you want (we recommend 1, 3, or 5). If you need more resources, consider increasing the plan size, or creating multiple availability zones.
 * Choose your region
 
+## (Optional) Auto-configure DNS
+
+You may wish to automatically configure your DNS records by using a terraform dns provider. Included here is an example file, `dns.tf.sample`. You may copy that to `dns.tf` and adjust accordingly. 
+
+By default, you will see the required DNS settings under `result/`.
+
+
 ## Setup Terraform
 
 Before proceeding, ensure you have [terraform installed](https://learn.hashicorp.com/tutorials/terraform/install-cli), and then run:
@@ -15,13 +22,6 @@ Before proceeding, ensure you have [terraform installed](https://learn.hashicorp
 ```bash
 terraform init
 ```
-
-## Using Linode DNS Manager
-If you choose to have terraform configure your domain in Linode's DNS manager:
-
-1. Set `use_linode_ns` to `true`
-2. Create the zone with Linode and take note of the domain ID in the URL.
-3. Set `linode_zone_id` with the domain ID.
 
 ## Running Terraform
 
