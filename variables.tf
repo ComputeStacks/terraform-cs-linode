@@ -1,6 +1,16 @@
 variable "linode_api_key" {
 	type = string
 }
+
+# ssh-keygen -q -C "${USER}@cstacks-terraform" -t ed25519 -N '' -f ~/.ssh/cstacks-terraform <<<y >/dev/null 2>&1 && cat ~/.ssh/cstacks-terraform.pub
+# Should also be installed into your DO Account and fingerprint listed above.
+# This is used to populate the inventory.yml file and will be used by Ansible to provision.
+variable "ssh_connection_priv_key_path" {
+  type = string
+  default = "~/.ssh/id_rsa"
+  description = "Path to your private key"
+}
+
 variable "ssh_users" {
 	type = list
 	default = ["computestacks"]
@@ -10,7 +20,7 @@ variable "ssh_users" {
 # Linode Image
 variable "debian_image" {
 	type = string
-	default = "linode/debian11"
+	default = "linode/debian12"
 }
 
 ##
@@ -53,11 +63,6 @@ variable "plan_controller_disk" {
 	default = 163840 # Disk included with the 'g6-standard-4' plan.
 }
 
-# Node
-variable "node_count" {
-	type = number
-	default = 1
-}
 # Used to create a consistent naming scheme for our nodes.
 # This is for our recommend hostname scheme for nodes:
 # * 3 digits for each node, following an identifier like 'node'.
@@ -184,4 +189,22 @@ variable "primary_nameserver_domain" {
 variable "secondary_nameserver_domain" {
 	type = string
 	default = ""
+}
+
+##
+# CloudFlare Auto Provisioning
+#acme_cf_token: "" # API Token
+#acme_cf_account: "" # Account ID
+variable "cloudflare_api_token" {
+  type = string
+  default = ""
+}
+variable "cloudflare_account_id" {
+  type = string
+  default = ""
+}
+variable "cloudflare_proxied" {
+  type = bool
+  default = false
+  description = "Enable if you want cloudflare to proxy your traffic."
 }

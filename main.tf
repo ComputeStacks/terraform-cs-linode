@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    linode = {
-      source  = "linode/linode"
-      version = "~> 1.25"
-    }
-  }
-}
-provider "linode" {
-	token = var.linode_api_key
-}
-
 resource "random_string" "server_password" {
     length  = 24
     special = false

@@ -5,4 +5,5 @@ terraform.tfstate*
 terraform.tfvars
 inventory.yml
 dns_settings.txt
-dns.tf
+dns_cloudflare.tf
+providers.tf

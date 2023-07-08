@@ -1,0 +1,73 @@
+##
+# Cloudflare DNS Management
+#
+# `mv dns_cloudflare.tf.sample dns_cloudflare.tf`
+
+data "cloudflare_zone" "zone" {
+  name = var.zone_name
+  account_id = var.cloudflare_account_id
+  lifecycle {
+    precondition {
+      condition = var.cloudflare_api_token != null
+      error_message = "Missing cloudflare_api_token"
+    }
+    precondition {
+      condition = var.cloudflare_account_id != null
+      error_message = "Missing cloudflare_account_id"
+    }
+  }
+}
+
+resource "cloudflare_record" "controller" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.cs_portal_domain
+  type = "A"
+  value = linode_instance.controller.ip_address
+  proxied = var.cloudflare_proxied
+}
+resource "cloudflare_record" "registry" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.cs_registry_domain
+  type = "A"
+  value = linode_instance.registry.ip_address
+  proxied = var.cloudflare_proxied
+}
+
+resource "cloudflare_record" "metrics" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.cs_metrics_domain
+  type = "A"
+  value = linode_instance.metrics.ip_address
+  proxied = var.cloudflare_proxied
+}
+resource "cloudflare_record" "app" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.cs_app_url
+  type = "A"
+  value = linode_instance.node.ip_address
+  proxied = var.cloudflare_proxied
+}
+
+resource "cloudflare_record" "app_wildcard" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = format("*.%s", var.cs_app_url)
+  type = "CNAME"
+  value = format("%s.%s.", var.cs_app_url, var.zone_name)
+  proxied = var.cloudflare_proxied
+}
+
+resource "cloudflare_record" "ns1" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.primary_nameserver_domain
+  type = "A"
+  value = linode_instance.nsone.ip_address
+  proxied = var.cloudflare_proxied
+}
+
+resource "cloudflare_record" "ns2" {
+  zone_id = data.cloudflare_zone.zone.id
+  name = var.secondary_nameserver_domain
+  type = "A"
+  value = linode_instance.nstwo.ip_address
+  proxied = var.cloudflare_proxied
+}

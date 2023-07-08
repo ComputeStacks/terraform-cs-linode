@@ -6,9 +6,9 @@ resource "linode_stackscript" "cs_init_debian" {
 # <UDF name="new_hostname" label="New Hostname" example="node101" default="node101">
 hostname $NEW_HOSTNAME && echo "127.0.0.1  $NEW_HOSTNAME" >> /etc/hosts
 hostnamectl set-hostname $NEW_HOSTNAME
-apt update && apt -y install openssl ca-certificates linux-headers-amd64 python3 python3-pip python3-openssl python3-apt && pip3 install ansible
+apt-get update && apt-get -y install apt-utils software-properties-common jq curl wget lsb-release iputils-ping vim openssl dnsutils ca-certificates linux-headers-amd64 python3 python3-pip python3-openssl python3-apt
 EOF
-  images      = ["linode/debian11"]
+  images      = ["linode/debian12"]
   rev_note    = "initial version"
 }
 
@@ -42,11 +42,9 @@ resource "linode_instance" "controller" {
   boot_config_label = "boot_config"
 }
 
-resource "linode_instance" "node_cluster" {
-  count = var.node_count
-
+resource "linode_instance" "node" {
   backups_enabled = false
-  label           = format("node%s%s", var.node_base_name, count.index + 1)
+  label           = "node100"
   region          = var.region
   type            = var.plan_node
   private_ip      = true
@@ -59,7 +57,7 @@ resource "linode_instance" "node_cluster" {
     root_pass        = random_string.server_password.result
     stackscript_id   = linode_stackscript.cs_init_debian.id
     stackscript_data = {
-      "new_hostname" = format("node%s%s", var.node_base_name, count.index + 1)
+      "new_hostname" = "node100"
     }
   }
 

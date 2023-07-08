@@ -1,10 +1,10 @@
 resource "local_file" "inventory" {
 	content = templatefile("outputs/inventory.yml.tmpl", {
-		nodes = linode_instance.node_cluster,
+		ssh_priv_key = var.ssh_connection_priv_key_path,
 		registry_public = linode_instance.registry.ip_address,
 		registry_private = linode_instance.registry.private_ip_address,
-		nodes_public = linode_instance.node_cluster.*.ip_address,
-		nodes_private = linode_instance.node_cluster.*.private_ip_address,
+		node_public = linode_instance.node.ip_address,
+		node_private = linode_instance.node.private_ip_address,
 		metrics_public = linode_instance.metrics.ip_address,
 		metrics_private = linode_instance.metrics.private_ip_address,
 		controller_public = linode_instance.controller.ip_address,
@@ -30,8 +30,7 @@ resource "local_file" "inventory" {
 		nsone_public = linode_instance.nsone.ip_address,
 		nstwo_public = linode_instance.nstwo.ip_address,
 		primary_nameserver_domain = format("%s.%s", var.primary_nameserver_domain, var.primary_nameserver_zone),
-		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone),
-		floating_ip = linode_instance.node_cluster.0.ip_address
+		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone)
 	})
 	filename = "result/inventory.yml"
 }
@@ -42,15 +41,14 @@ resource "local_file" "dns_settings" {
 		cs_portal_domain = format("%s.%s", var.cs_portal_domain, var.zone_name),
 		cs_registry_domain = format("%s.%s", var.cs_registry_domain, var.zone_name),
 		cs_metrics_domain = format("%s.%s", var.cs_metrics_domain, var.zone_name),
-		nodes_public = linode_instance.node_cluster.*.ip_address,
+		node_public = linode_instance.node.ip_address,
 		controller_public = linode_instance.controller.ip_address,
 		metrics_public = linode_instance.metrics.ip_address,
 		registry_public = linode_instance.registry.ip_address,
 		nsone_public = linode_instance.nsone.ip_address,
 		nstwo_public = linode_instance.nstwo.ip_address,
 		primary_nameserver_domain = format("%s.%s", var.primary_nameserver_domain, var.primary_nameserver_zone),
-		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone),
-		floating_ip = linode_instance.node_cluster.0.ip_address
+		secondary_nameserver_domain = format("%s.%s", var.secondary_nameserver_domain, var.secondary_nameserver_zone)
 	})
 	filename = "result/dns_settings.txt"
 }
